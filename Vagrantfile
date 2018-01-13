@@ -40,12 +40,8 @@ EOF
       		# using slightly modified flannel config since it requires using enp0s8 as default interface.  See: https://github.com/kubernetes/kubeadm/issues/139#issuecomment-276607463
       		kubectl apply -f /data/kube-flannel.yml
 
-      		# be sure that kube-dns pod is up and running before adding nodes
-      		# kubectl get pods --all-namespaces
+      		# Download sample Docker image and run as deployment (won't deploy until a worker node is available)
       		kubectl run spring-boot-hello --image=docker.io/mkez00/spring-boot-docker:latest --port=8080
-
-      		# Expose deployment with NodePort type, see types and descriptions at: https://kubernetes.io/docs/tutorials/kubernetes-basics/expose-intro/
-      		#kubectl expose deployment spring-boot-hello --name=spring-boot-hello
 
 		SHELL
 	end
