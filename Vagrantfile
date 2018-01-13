@@ -1,8 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-#If you are using VirtualBox (directly or via Vagrant), you will need to ensure that hostname -i returns a routable IP address (i.e. one on the second network interface, not the first one). By default, it doesn’t do this and kubelet ends-up using first non-loopback network interface, which is usually NATed. Workaround: Modify /etc/hosts, take a look at this Vagrantfileubuntu-vagrantfile for how this can be achieved
-
 Vagrant.configure("2") do |config|
 	config.vm.define "master" do |c|
 		c.vm.hostname = 'master'
@@ -52,59 +50,45 @@ EOF
 		SHELL
 	end
 
-	config.vm.define "node1" do |c|
-		c.vm.hostname = 'node1'
-		c.vm.box = "ubuntu/xenial64"
-		c.vm.synced_folder "data", "/data"
-		c.vm.network "private_network", ip: "192.168.56.11"
-		c.vm.provision "shell", inline: <<-SHELL
-			sudo su
+	$node_script = <<-SHELL
+		sudo su
 
-			# Need to ensure that hostname -i returns a routable IP address.  See: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/
-			sed 's/127\.0\.0\.1.*node1.*/192\.168\.56\.11 node1/' -i /etc/hosts
+		# Need to ensure that hostname -i returns a routable IP address.  See: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/
+		sed "s/127\.0\.0\.1.*node${1}.*/192\.168\.56\.${1} node${1}/" -i /etc/hosts
 
-			apt-get update 
-			apt-get install -y apt-transport-https
-			curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-			cat <<EOF > /etc/apt/sources.list.d/kubernetes.list  
+		apt-get update 
+		apt-get install -y apt-transport-https
+		curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+		cat <<EOF > /etc/apt/sources.list.d/kubernetes.list  
 deb http://apt.kubernetes.io/ kubernetes-xenial main  
 EOF
-			apt-get update
-			apt-get install -y docker.io
-			apt-get install -y kubelet kubeadm kubectl kubernetes-cni
+		apt-get update
+		apt-get install -y docker.io
+		apt-get install -y kubelet kubeadm kubectl kubernetes-cni
 
-			sysctl net.bridge.bridge-nf-call-iptables=1
+		sysctl net.bridge.bridge-nf-call-iptables=1
 
-			# Join node to cluster
-			sh /data/join-cluster.sh
-		SHELL
+		# Join node to cluster
+		sh /data/join-cluster.sh
+	SHELL
+
+	$num_node = 2
+	$num_node.times do |n|
+		node_vm_name = "node#{n+20}"
+		hostname = "node#{n+20}"
+		private_ip = "192.168.56.#{n+20}"
+		node = "#{n+20}"
+
+		config.vm.define node_vm_name do |c|
+			c.vm.hostname = hostname
+			c.vm.box = "ubuntu/xenial64"
+			c.vm.synced_folder "data", "/data"
+			c.vm.network "private_network", ip: private_ip
+			c.vm.provision "shell", run: "always" do |s|
+				s.inline = $node_script
+				s.args = node
+			end
+		end
 	end
 
-	config.vm.define "node2" do |c|
-		c.vm.hostname = 'node2'
-		c.vm.box = "ubuntu/xenial64"
-		c.vm.synced_folder "data", "/data"
-		c.vm.network "private_network", ip: "192.168.56.12"
-		c.vm.provision "shell", inline: <<-SHELL
-			sudo su
-
-			# Need to ensure that hostname -i returns a routable IP address.  See: https://kubernetes.io/docs/setup/independent/troubleshooting-kubeadm/
-			sed 's/127\.0\.0\.1.*node2.*/192\.168\.56\.12 node2/' -i /etc/hosts
-
-			apt-get update 
-			apt-get install -y apt-transport-https
-			curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-			cat <<EOF > /etc/apt/sources.list.d/kubernetes.list  
-deb http://apt.kubernetes.io/ kubernetes-xenial main  
-EOF
-			apt-get update
-			apt-get install -y docker.io
-			apt-get install -y kubelet kubeadm kubectl kubernetes-cni
-
-			sysctl net.bridge.bridge-nf-call-iptables=1
-
-			# Join node to cluster
-			sh /data/join-cluster.sh
-		SHELL
-	end
 end

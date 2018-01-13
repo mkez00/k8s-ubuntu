@@ -10,7 +10,7 @@ Demonstrates provisioning a Kubernetes cluster with a single master and any numb
 # Instructions
 
 1) Run `vagrant up` from root of project (where Vagrantfile is located)
-2) After completed, SSH into master using `vagrant ssh master` and into worker nodes with `vagrant ssh node#` where # is the node number (1,2,3...n)
+2) After completed, SSH into master using `vagrant ssh master` and into worker nodes with `vagrant ssh node#` where # is the node number (20,21,22...n)
 
 # Verify Pod Communication
 
@@ -27,7 +27,7 @@ Demonstrates provisioning a Kubernetes cluster with a single master and any numb
 2) Run `kubectl expose deployment spring-boot-hello --name=spring-boot-hello`
 3) Run `kubectl get svc`.  Copy the CLUSTER-IP and PORT for the `spring-boot-hello` service
 4) Run `curl <CLUSTER_IP>:<PORT>`.  'Hello Docker World' is the returned output
-5) SSH into any of the worker nodes with `vagrant ssh node#` where # is the node number (1,2,3...n)
+5) SSH into any of the worker nodes with `vagrant ssh node#` where # is the node number (20,21,22,...n)
 6) Run `curl <CLUSTER_IP>:<PORT>`.  'Hello Docker World' is the returned output
 
 # Utilizing Kube DNS for Pod-to-Pod Communication
@@ -35,6 +35,6 @@ Demonstrates provisioning a Kubernetes cluster with a single master and any numb
 Pods often need to communicate.  For example, if you're running Prometheus for monitoring and Grafana as your visualization utility.  Grafana will need a connection to Prometheus.  Using DNS is ideal vs tracking pod or exposed service IP addresses.
 
 1) Complete steps 1 and 2 from 'Exposing Deployment with Services' section
-2) While still in the master node run `kubectl run curl --image=radial/busyboxplus:curl -i --tty`.  If this errors with an AlreadyExists error.  Get the Pod name (`kubectl get pods` and run `kubectl attach <POD_NAME> -c curl -i -t`)
+2) While still in the master node run `kubectl run curl --image=radial/busyboxplus:curl -i --tty`.  If this errors with an AlreadyExists error.  Get the Pod name by executing `kubectl get pods` and run `kubectl attach <POD_NAME> -c curl -i -t`
 3) Run `curl spring-boot-hello:8080`.  'Hello Docker World' is the returned output
 
